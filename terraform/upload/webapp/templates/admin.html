@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Logic Checker Admin Console</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}" />
+  <link rel="icon" href="https://sits.com/wp-content/uploads/2024/05/cropped-favicon-32x32-1-32x32.png" sizes="32x32" />
+  <link rel="icon" href="https://sits.com/wp-content/uploads/2024/05/cropped-favicon-32x32-1-192x192.png" sizes="192x192" />
+  <link rel="apple-touch-icon" href="https://sits.com/wp-content/uploads/2024/05/cropped-favicon-32x32-1-180x180.png" />
+  <meta name="msapplication-TileImage" content="https://sits.com/wp-content/uploads/2024/05/cropped-favicon-32x32-1-270x270.png" />
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Operations</p>
+        <h1>Logic Checker Routes</h1>
+        <p class="lede">Manage tokens, actions, and prompt overrides that live inside the <code>api_config</code> table. Provide your admin token once per session.</p>
+      </div>
+    </header>
+
+    <section class="panel">
+      <form id="routeForm">
+        <div class="grid">
+          <label>Token
+            <input id="token" name="token" required maxlength="256" />
+          </label>
+          <label>Action
+            <input id="action" name="action" required maxlength="256" />
+          </label>
+        </div>
+        <label>Prompt override
+          <textarea id="prompt" name="prompt" rows="4" placeholder="Optional prompt that replaces the default."></textarea>
+        </label>
+        <div class="grid">
+          <label>Endpoint override
+            <input id="endpoint" name="endpoint" placeholder="https://example.openai.azure.com/" />
+          </label>
+          <label>API key override
+            <input id="apiKey" name="apiKey" />
+          </label>
+        </div>
+        <div class="actions">
+          <button type="submit">Save route</button>
+          <button type="reset" class="ghost">Reset</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Existing routes</h2>
+        <button id="refreshBtn" type="button" class="ghost">Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Token</th>
+              <th>Action</th>
+              <th>Endpoint</th>
+              <th>Prompt</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="routesTable">
+            <tr>
+              <td colspan="5" class="empty">No data loaded yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="{{ url_for('static', filename='js/admin.js') }}" defer></script>
+</body>
+</html>

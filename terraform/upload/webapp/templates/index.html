@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="de">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="Compliant AI Logic Check – SITS kiosk interface" />
+        <title>Compliant AI Logic Check | SITS</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link rel="icon" href="https://sits.com/wp-content/uploads/2024/05/cropped-favicon-32x32-1-32x32.png" sizes="32x32" />
+        <link rel="icon" href="https://sits.com/wp-content/uploads/2024/05/cropped-favicon-32x32-1-192x192.png" sizes="192x192" />
+        <link rel="apple-touch-icon" href="https://sits.com/wp-content/uploads/2024/05/cropped-favicon-32x32-1-180x180.png" />
+        <meta name="msapplication-TileImage" content="https://sits.com/wp-content/uploads/2024/05/cropped-favicon-32x32-1-270x270.png" />
+    </head>
+    <body>
+        <div class="grain"></div>
+        <main class="shell" tabindex="0">
+            <header class="hero">
+                <div>
+                    <div>
+                        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="logo" />
+                        <br>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="text-center">Compliant AI Logic Check</h1>
+                    <p class="lede text-justify">Upload Document (.txt, .pdf, .docx) or paste documentation snippets with <strong>Ctrl&nbsp;+&nbsp;V</strong>. The kiosk forwards them securely to the Logic Checker backend and renders structured findings for clinicians.</p>
+                </div>
+                <div>
+                    <button class="ghost-btn paste-hint" id="upload-btn" title="Supported formats: .txt, .pdf, .docx">
+                        <i class="fas fa-upload"></i>
+                        Upload Document
+                    </button>
+                    <br>
+                    <p class="text-center">OR</p>
+                    <div class="paste-hint" id="paste-hint">
+                        Press <span class="combo">Ctrl</span> + <span class="combo">V</span><br />
+                        to analyze the clipboard
+                    </div>
+                </div>
+            </header>
+
+            <section class="output-card">
+                <div class="meta-row">
+                    <div>
+                        <p class="meta-label">Latest snippet</p>
+                        <p class="meta-value" id="input-preview">Awaiting clipboard input …</p>
+                    </div>
+                    <div class="meta-actions">
+                        <span class="status" id="status-dot">Idle</span>
+                        <button class="ghost-btn" id="copy-btn">
+                            <i class="far fa-copy"></i>
+                            Copy output
+                        </button>
+                    </div>
+                </div>
+
+                <div class="output-body" id="output-text">
+                    <div class="placeholder">Paste any medical documentation snippet to start a logic consistency check.</div>
+                </div>
+            </section>
+            <section class=>
+                <!-- Add fields to type action and token -->
+                <h3>Configuration</h3>
+                <div class="form-group hero">
+                    <div>
+                        <label for="action">Action:</label>
+                        <input type="text" id="action" name="action" class="ghost-btn paste-hint" placeholder="Enter action" />
+                    </div>
+                    <div>
+                        <label for="token">Token:</label>
+                        <input type="text" id="token" name="token" class="ghost-btn paste-hint" placeholder="Enter token" />
+                    </div>
+                    <div>
+                        <button class="ghost-btn paste-hint" id="set-config-btn" type="button"><i class="fas fa-save"></i> Set configuration</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <div class="disclaimer">
+            <p>This AI tool is designed to assist medical documentation but should not be relied upon in isolation. All outputs should be reviewed for accuracy. AI can make mistakes and should be used as a supportive tool only. Clinical judgment and verification remain essential.</p>
+            <p>© 2026 SITS Deutschland GmbH · For professional use only.</p>
+        </div>
+
+        <div class="toast" id="toast">Ready.</div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js" integrity="sha512-9+ilAOeXY8qy2bw/h51MmliNNHvdyhTpLIlqDmVpD26z8VjVJsUJtk5rhbDIUvYiD+EpGoAu0xTa7MhZohFQjA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="{{ url_for('static', filename='js/fairytale.js') }}" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    </body>
+</html>
+

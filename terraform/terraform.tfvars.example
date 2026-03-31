@@ -1,0 +1,17 @@
+subscription_id           = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+resource_group_name       = "rg-dmo-logicchecker-01"
+location                  = "germanywestcentral"
+name_prefix               = "logicchecker"
+sku                       = "B1"  # Use B1 for testing, P0v3 for production
+enable_entra_id           = true
+deploy_azure_openai       = true
+openai_api_version        = "2025-04-01-preview"
+openai_module_version     = "2025-08-07"
+openai_deployment_name    = "gpt-5-mini"
+enable_private_networking = false
+
+resource_tags = {
+  environment     = "development"
+  workload        = "logicchecker"
+  owner           = "Firstname Lastname"
+}

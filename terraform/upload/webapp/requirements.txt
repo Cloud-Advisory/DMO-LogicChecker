@@ -1,0 +1,16 @@
+Flask==3.1.0
+Flask-Caching==2.3.0
+Flask-Session==0.8.0
+flask_cors
+uvicorn[standard]>=0.30.0
+gunicorn>=21.2.0
+openai>=1.35.10
+pymssql>=2.3.0
+pymysql>=1.1.0
+azure-identity>=1.16.0
+azure-keyvault-secrets>=4.8.0
+azure-data-tables>=12.4.0
+pydantic>=2.7.1
+pydantic-settings>=2.2.1
+python-dotenv>=1.0.1
+
