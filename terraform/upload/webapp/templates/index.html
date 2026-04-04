@@ -27,10 +27,13 @@
                     <p class="lede text-justify">Upload Document (.txt, .pdf, .docx) or paste documentation snippets with <strong>Ctrl&nbsp;+&nbsp;V</strong>. The kiosk forwards them securely to the Logic Checker backend and renders structured findings for clinicians.</p>
                 </div>
                 <div>
-                    <button class="ghost-btn paste-hint" id="upload-btn" title="Supported formats: .txt, .pdf, .docx">
-                        <i class="fas fa-upload"></i>
-                        Upload Document
-                    </button>
+                    <div class="upload-wrapper">
+                        <input type="file" id="file-input" accept=".txt,.pdf,.docx" />
+                        <button class="ghost-btn paste-hint" id="upload-btn" title="Supported formats: .txt, .pdf, .docx">
+                            <i class="fas fa-upload"></i>
+                            Upload Document
+                        </button>
+                    </div>
                     <br>
                     <p class="text-center">OR</p>
                     <div class="paste-hint" id="paste-hint">

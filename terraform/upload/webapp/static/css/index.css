@@ -379,3 +379,23 @@ body {
 input.ghost-btn {
     cursor: text;
 }
+
+
+.upload-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.upload-wrapper input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.upload-wrapper button {
+  position: relative;
+  z-index: 1;
+}
