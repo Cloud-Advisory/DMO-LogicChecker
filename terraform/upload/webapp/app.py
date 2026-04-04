@@ -3,6 +3,7 @@ Flask application for medical documentation analysis using Azure Foundry LLM.
 Provides endpoints for analyzing clinical text with role-based access control.
 """
 
+from fileinput import filename
 import logging
 import json
 import base64
@@ -263,6 +264,100 @@ def analyze():
     response_model = AnalyzeResponse(analysis=analysis)
     return jsonify(response_model.model_dump())
 
+@app.route("/api/v1/upload", methods=["POST"])
+def upload_file():
+    # open the uploaded file and read its contents
+
+    print(request.files)
+    payload = request.form.to_dict()
+    if 'file' not in request.files:
+        logger.warning("No file part in the request")
+        return make_response(jsonify({"error": "No file part in the request"}), 400)
+    file = request.files['file']
+    if file.filename == '':
+        logger.warning("No selected file")
+        return make_response(jsonify({"error": "No selected file"}), 400)
+    
+    file_contents = ""
+    if file.filename.endswith('.txt'):
+        file_contents = file.read().decode('utf-8')
+    elif file.filename.endswith('.pdf'):
+        # Parse PDF files using PyPDF2
+        try:
+            import PyPDF2
+            reader = PyPDF2.PdfReader(file)
+            file_contents = "\n".join([page.extract_text() for page in reader.pages])
+        except ImportError:
+            logger.error("PyPDF2 library is not installed. PDF parsing will not work.")
+            file_contents = "PDF content parsing not implemented (missing PyPDF2 library)."
+    elif file.filename.endswith('.docx'):
+        #  Parse DOCX files using python-docx
+        try:
+            from docx import Document
+            document = Document(file)
+            file_contents = "\n".join([para.text for para in document.paragraphs])
+        except ImportError:
+            logger.error("python-docx library is not installed. DOCX parsing will not work.")
+            file_contents = "DOCX content parsing not implemented (missing python-docx library)."
+    
+    else:
+        logger.warning("Unsupported file type: %s", file.filename)
+        return make_response(jsonify({"error": "Unsupported file type"}), 400)
+
+    print("Received file: %s (%d bytes)" % (file.filename, len(file_contents)))
+    print("File contents (first 500 chars): %s" % file_contents[:500])
+
+    # Extract and validate bearer token
+    auth_header = request.headers.get("Authorization")
+    print("Authorization header: %s" % auth_header)
+    token_or_response = _extract_bearer_token(auth_header)
+    if isinstance(token_or_response, tuple) or hasattr(token_or_response, "status_code"):
+        return token_or_response
+    token = token_or_response
+
+    # Resolve dependencies per-request
+    registry: AzureTableStorageRepository = get_registry_repository()
+    llm_client: AzureFoundryClient = get_llm_client()
+    secrets: SecretProvider = get_secret_provider()
+
+    # Authenticate token/action combination
+    route = registry.fetch_route(token, payload.get('action'))
+    if not route:
+        logger.warning("Unauthorized token/action combination: action=%s", payload.get('action'))
+        return make_response(jsonify({"error": "Token/action combination is not authorized"}), 403)
+
+    # Determine prompt and prepare request
+    prompt = route.get("prompt") or secrets.get_secret(
+        settings.prompt_secret_name,
+        fallback_env="PROMPT_TEMPLATE",
+        default=DEFAULT_PROMPT,
+    )
+
+    fairytale_requested = False
+    active_prompt = FAIRYTALE_PROMPT if fairytale_requested else (prompt or DEFAULT_PROMPT)
+    user_text = file_contents
+
+    api_key_override = route.get("api_key")
+    if isinstance(api_key_override, bytes):
+        api_key_override = api_key_override.decode("utf-8")
+    endpoint_override = route.get("endpoint")
+
+    # Call LLM
+    try:
+        logger.info("Invoking LLM for action: %s", payload.action)
+        analysis = llm_client.run_completion(
+            prompt=active_prompt,
+            user_text=user_text or payload.text,
+            endpoint_override=endpoint_override,
+            api_key_override=api_key_override,
+        )
+        logger.info("LLM analysis completed successfully")
+    except Exception as e:
+        logger.exception("Azure Foundry call failed: %s", str(e))
+        return make_response(jsonify({"error": "LLM processing failed"}), 502)
+
+    response_model = AnalyzeResponse(analysis=analysis)
+    return jsonify(response_model.model_dump())
 
 
 if __name__ == "__main__":

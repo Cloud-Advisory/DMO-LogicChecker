@@ -267,3 +267,42 @@ document.getElementById('set-config-btn').addEventListener('click', function() {
     url.searchParams.set('token', token);
     window.location = url.toString();
 });
+
+document.getElementById('upload-btn').addEventListener('click', function() {
+    const fileInput = document.getElementById('file-input');
+    const file = fileInput.files[0];
+    if (!file) {
+        alert('Please select a file.');
+        return;
+    }
+    const action = document.getElementById('action').value;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('filename', file.name);
+    formData.append('action', action);
+    formData.append('fairytale', false);
+    const currentToken = document.getElementById('token').value;
+    console.log(formData);
+
+    // Update status
+    document.getElementById('status-dot').textContent = 'Uploading...';
+    fetch('/api/v1/upload', {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${currentToken}`,
+            Accept: "application/json",
+        },
+        mode: "cors",
+        body: formData,
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Update output and status
+        document.getElementById('output-text').innerHTML = data.result || 'Processing complete.';
+        document.getElementById('status-dot').textContent = 'Idle';
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('status-dot').textContent = 'Error';
+    });
+});
