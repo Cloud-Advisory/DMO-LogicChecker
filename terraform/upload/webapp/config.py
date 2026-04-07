@@ -79,7 +79,6 @@ class Settings(BaseSettings):
     sql_flavor: str = Field(default="mssql", alias="SQL_FLAVOR")
 
     storage_account_name: str = Field(default="", alias="STORAGE_ACCOUNT_NAME")
-    storage_account_key_secret_name: str = Field(default="storage-account-key", alias="STORAGE_ACCOUNT_KEY_SECRET_NAME")
     storage_table_name: str = Field(default="ApiConfig", alias="STORAGE_TABLE_NAME")
 
     data_provider: str = Field(default="sql", alias="DATA_PROVIDER")
