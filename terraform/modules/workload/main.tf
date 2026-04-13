@@ -62,8 +62,8 @@ resource "azurerm_key_vault" "main" {
   tenant_id                     = var.aad_tenant_id
   sku_name                      = "standard"
   soft_delete_retention_days    = 7
-  purge_protection_enabled      = true
-  public_network_access_enabled = true
+  purge_protection_enabled      = true # Disable purge protection for dev/test deployments to allow cleanup, enable for production
+  public_network_access_enabled = var.enable_private_networking ? false : true
   tags                          = var.resource_tags
   rbac_authorization_enabled    = true
 }

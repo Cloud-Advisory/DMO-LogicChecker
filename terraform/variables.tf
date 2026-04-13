@@ -50,6 +50,11 @@ variable "subscription_id" {
   description = "Azure Subscription ID where the resources will be deployed."
   type        = string
 }
+variable "devtest_deployment" {
+  description = "Flag to indicate if the deployment is for development/testing or production."
+  type        = bool
+  default     = true
+}
 variable "enable_private_networking" {
   description = "If value is true, public networking will be disabled and private endpoints will be created for Azure Storage and Azure OpenAI."
   type        = bool
