@@ -4,6 +4,8 @@ provider "azurerm" {
       prevent_deletion_if_contains_resources = false
     }
   }
+  resource_provider_registrations = "none" # will be a default value in future versions of the provider, but currently needs to be set explicitly to register only the resource providers that are actually used in the deployment.
+  storage_use_azuread             = true
   subscription_id = "<<subscription_id>>"
 }
 
