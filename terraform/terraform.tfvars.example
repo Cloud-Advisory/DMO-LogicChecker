@@ -40,3 +40,6 @@ resource_tags = {
   workload        = "logicchecker"
   owner           = "Firstname Lastname"
 }
+
+## Default AI prompt template saved to Key Vault secret 'prompt-template'.
+prompt_template = "You are a medical documentation assistant supporting clinicians. Return well-structured German text, preserve clinical accuracy, and never invent data."
