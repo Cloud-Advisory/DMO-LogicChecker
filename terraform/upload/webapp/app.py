@@ -270,6 +270,7 @@ def upload_file():
 
     print(request.files)
     payload = request.form.to_dict()
+    print(payload)
     if 'file' not in request.files:
         logger.warning("No file part in the request")
         return make_response(jsonify({"error": "No file part in the request"}), 400)
@@ -344,10 +345,10 @@ def upload_file():
 
     # Call LLM
     try:
-        logger.info("Invoking LLM for action: %s", payload.action)
+        logger.info("Invoking LLM for action: %s", payload.get('action'))
         analysis = llm_client.run_completion(
             prompt=active_prompt,
-            user_text=user_text or payload.text,
+            user_text=user_text or payload.get('text'),
             endpoint_override=endpoint_override,
             api_key_override=api_key_override,
         )

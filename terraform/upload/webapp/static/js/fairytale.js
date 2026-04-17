@@ -269,20 +269,37 @@ document.getElementById('set-config-btn').addEventListener('click', function() {
 });
 
 document.getElementById('upload-btn').addEventListener('click', function() {
+
+    const outputText = document.getElementById("output-text");
+    const copyBtn = document.getElementById("copy-btn");
+    const pasteHint = document.getElementById("paste-hint");
+    const statusDot = document.getElementById("status-dot");
+    const toast = document.getElementById("toast");
+    const shell = document.querySelector(".shell");
+
     const fileInput = document.getElementById('file-input');
     const file = fileInput.files[0];
     if (!file) {
         alert('Please select a file.');
         return;
     }
-    const action = document.getElementById('action').value;
+    const urlParams = getQueryParams();
+    const action = urlParams.action;
     const formData = new FormData();
     formData.append('file', file);
     formData.append('filename', file.name);
     formData.append('action', action);
     formData.append('fairytale', false);
-    const currentToken = document.getElementById('token').value;
+    // const currentToken = document.getElementById('token').value;
+    const currentToken = urlParams.token;
     console.log(formData);
+
+    // Change Text to indicate upload in progress of input preview paragraph
+    const inputPreview = document.getElementById('input-preview');
+    if (inputPreview) {
+        inputPreview.innerText = 'Analyzing File Contents';
+    }
+    document.getElementById('output-text').innerHTML = 'Uploading file...';
 
     // Update status
     document.getElementById('status-dot').textContent = 'Uploading...';
@@ -298,11 +315,50 @@ document.getElementById('upload-btn').addEventListener('click', function() {
     .then(response => response.json())
     .then(data => {
         // Update output and status
-        document.getElementById('output-text').innerHTML = data.result || 'Processing complete.';
-        document.getElementById('status-dot').textContent = 'Idle';
+        // document.getElementById('output-text').innerHTML = data.result || 'Processing complete.';
+        // document.getElementById('status-dot').textContent = 'Idle';
+        const analysis = data.analysis || "No analysis returned.";
+        renderAnalysis(analysis);
+        showToast("Analysis ready.");
+        setStatus("Complete", "success");
     })
     .catch(error => {
         console.error('Error:', error);
-        document.getElementById('status-dot').textContent = 'Error';
+        renderError("An error occurred while processing the file.");
+        setStatus("Error", "error");
     });
+    // });
+
+    function renderAnalysis(content) {
+        outputText.innerHTML = sanitizeHtml(content);
+    }
+
+    function renderError(message) {
+        outputText.innerHTML = `<p class="error-message">Error: ${escapeHtml(message)}</p>`;
+    }
+
+    function updatePreview(text) {
+        if (inputPreview) {
+            inputPreview.innerText = abbreviate(text);
+        }
+    }
+
+    function setStatus(label, variant = "idle") {
+        if (!statusDot) {
+            return;
+        }
+        statusDot.innerText = label;
+        statusDot.className = `status ${variant}`.trim();
+    }
+
+    function showToast(message, isError = false) {
+        if (!toast) {
+            return;
+        }
+        toast.innerText = message;
+        toast.style.background = isError ? "#e25255" : "#0b1f3a";
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2000);
+    }
+
 });
