@@ -71,18 +71,10 @@ class Settings(BaseSettings):
     openai_temperature: float | None = Field(default=None, alias="OPENAI_TEMPERATURE")
     openai_top_p: float | None = Field(default=None, alias="OPENAI_TOP_P")
 
-    sql_username_secret_name: str = Field(default="sql-username", alias="SQL_USERNAME_SECRET_NAME")
-    sql_password_secret_name: str = Field(default="sql-password", alias="SQL_PASSWORD_SECRET_NAME")
-    sql_server: str = Field(default="", alias="SQL_SERVER")
-    sql_database: str = Field(default="", alias="SQL_DATABASE")
-    sql_port: int | None = Field(default=None, alias="SQL_PORT")
-    sql_flavor: str = Field(default="mssql", alias="SQL_FLAVOR")
-
     storage_account_name: str = Field(default="", alias="STORAGE_ACCOUNT_NAME")
-    storage_account_key_secret_name: str = Field(default="storage-account-key", alias="STORAGE_ACCOUNT_KEY_SECRET_NAME")
     storage_table_name: str = Field(default="ApiConfig", alias="STORAGE_TABLE_NAME")
 
-    data_provider: str = Field(default="sql", alias="DATA_PROVIDER")
+    data_provider: str = Field(default="table", alias="DATA_PROVIDER")
 
     key_vault_uri: str | None = Field(default=None, alias="KEY_VAULT_URI")
     static_base_url: str | None = Field(default=None, alias="STATIC_BASE_URL")

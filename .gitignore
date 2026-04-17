@@ -9,6 +9,7 @@ terraform.tfstate
 terraform.tfstate.backup
 
 **/upload/webapp.zip
+runtime.config.json
 
 
 # Local .terraform directories

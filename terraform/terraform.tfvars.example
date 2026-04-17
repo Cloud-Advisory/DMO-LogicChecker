@@ -1,17 +1,45 @@
-subscription_id           = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-resource_group_name       = "rg-dmo-logicchecker-01"
-location                  = "germanywestcentral"
-name_prefix               = "logicchecker"
-sku                       = "B1"  # Use B1 for testing, P0v3 for production
-enable_entra_id           = true
-deploy_azure_openai       = true
-openai_api_version        = "2025-04-01-preview"
-openai_module_version     = "2025-08-07"
-openai_deployment_name    = "gpt-5-mini"
+## Azure subscription ID used for provisioning resources
+subscription_id = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+
+## Name of the resource group to create or use
+resource_group_name = "rg-dmo-logicchecker-01"
+
+## Azure region where resources will be deployed
+location = "germanywestcentral"
+
+## Prefix applied to created resource names
+name_prefix = "logicchecker"
+
+## SKU for hosted services (B1 for test, P0v3 for production)
+sku = "P0v3"
+
+## Enable Entra ID (Azure AD) integration for the deployment
+enable_entra_id = true
+
+## Whether to deploy Azure OpenAI resources
+deploy_azure_openai = true
+
+## API version to use for OpenAI service calls
+openai_api_version = "2025-04-01-preview"
+
+## Module version pin for OpenAI-related Terraform modules
+openai_module_version = "2025-08-07"
+
+## Name of the OpenAI model/deployment to target
+openai_deployment_name = "gpt-5-mini"
+
+## Deploy a development/test instance alongside production (true=dev/test)
+devtest_deployment = true # Set to false for production deployment
+
+## Enable private networking (VNet integration) for resources
 enable_private_networking = false
 
+## Tags applied to all created resources
 resource_tags = {
-  environment     = "development"
+  environment     = "production"
   workload        = "logicchecker"
   owner           = "Firstname Lastname"
 }
+
+## Default AI prompt template saved to Key Vault secret 'prompt-template'.
+prompt_template = "You are a medical documentation assistant supporting clinicians. Return well-structured German text, preserve clinical accuracy, and never invent data."

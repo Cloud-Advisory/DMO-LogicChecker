@@ -22,28 +22,19 @@ class AzureTableStorageRepository:
     def _initialize_table_client(self):
         """Initialize the Azure Table Storage client."""
         storage_account_name = self._settings.storage_account_name.strip()
-        storage_account_key = self._secrets.get_secret(
-            self._settings.storage_account_key_secret_name,
-            fallback_env="STORAGE_ACCOUNT_KEY"
-        )
         table_name = self._settings.storage_table_name.strip()
 
         if not storage_account_name:
             raise RuntimeError("STORAGE_ACCOUNT_NAME is not configured.")
-        if not storage_account_key:
-            raise RuntimeError("Storage account key is not configured. Populate Key Vault or environment variables.")
         if not table_name:
             raise RuntimeError("STORAGE_TABLE_NAME is not configured.")
 
         try:
-            # connection_string = f"DefaultEndpointsProtocol=https;AccountName={storage_account_name};AccountKey={storage_account_key};EndpointSuffix=core.windows.net"
-            # self._table_client = TableClient.from_connection_string(
-            #     conn_str=connection_string,
-            #     table_name=table_name
-            # )
-
-            credential=DefaultAzureCredential()
-            table_service_client = TableServiceClient(endpoint=f"https://{storage_account_name}.table.core.windows.net/", credential=credential)
+            credential = DefaultAzureCredential()
+            table_service_client = TableServiceClient(
+                endpoint=f"https://{storage_account_name}.table.core.windows.net/",
+                credential=credential,
+            )
             self._table_client = table_service_client.get_table_client(table_name)
 
             self._logger.info(

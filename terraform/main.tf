@@ -25,6 +25,7 @@ module "workload" {
   openai_api_version            = var.openai_api_version
   openai_module_version         = var.openai_module_version
   openai_deployment_name        = var.openai_deployment_name
+  devtest_deployment            = var.devtest_deployment
   enable_private_networking     = var.enable_private_networking
   prompt_template               = var.prompt_template
 }

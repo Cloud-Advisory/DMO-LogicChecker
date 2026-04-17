@@ -29,6 +29,10 @@ resource "azurerm_storage_account" "main" {
 resource "azurerm_storage_table" "main" {
   name                 = "ApiConfig"
   storage_account_name = azurerm_storage_account.main.name
+  depends_on = [
+    azurerm_storage_account.main,
+    azurerm_role_assignment.st_blob_data_contributor
+  ]
 }
 
 resource "azurerm_private_endpoint" "storage_account" {
@@ -58,20 +62,10 @@ resource "azurerm_key_vault" "main" {
   tenant_id                     = var.aad_tenant_id
   sku_name                      = "standard"
   soft_delete_retention_days    = 7
-  purge_protection_enabled      = true
-  public_network_access_enabled = true
+  purge_protection_enabled      = true # Disable purge protection for dev/test deployments to allow cleanup, enable for production
+  public_network_access_enabled = var.enable_private_networking ? false : true
   tags                          = var.resource_tags
   rbac_authorization_enabled    = true
-}
-resource "azurerm_key_vault_secret" "storage_key" {
-  name         = "storage-account-key"
-  value        = azurerm_storage_account.main.primary_access_key
-  key_vault_id = azurerm_key_vault.main.id
-  depends_on = [
-    azurerm_storage_account.main,
-    azurerm_role_assignment.kv_secrets_officer,
-    azurerm_key_vault.main,
-  ]
 }
 resource "azurerm_key_vault_secret" "openai_key" {
   count        = var.deploy_azure_openai ? 1 : 0
@@ -215,9 +209,8 @@ resource "azurerm_linux_web_app" "main" {
     OPENAI_API_VERSION     = var.openai_api_version
     OPENAI_DEPLOYMENT_NAME = var.openai_deployment_name # var.deploy_azure_openai ? "gpt-5-mini" : null
 
-    STORAGE_ACCOUNT_NAME            = azurerm_storage_account.main.name
-    STORAGE_ACCOUNT_KEY_SECRET_NAME = "storage-account-key"
-    STORAGE_TABLE_NAME              = "ApiConfig"
+    STORAGE_ACCOUNT_NAME = azurerm_storage_account.main.name
+    STORAGE_TABLE_NAME   = azurerm_storage_table.main.name
 
     SCM_DO_BUILD_DURING_DEPLOYMENT           = "1"
     MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = "@Microsoft.KeyVault(VaultName=${azurerm_key_vault.main.name};SecretName=${azurerm_key_vault_secret.entra_id_auth_secret.name})" #azuread_application_password.this.value
@@ -235,6 +228,10 @@ resource "azurerm_linux_web_app" "main" {
       client_id                  = azuread_application.this.client_id
       tenant_auth_endpoint       = "https://login.microsoftonline.com/${var.aad_tenant_id}/v2.0"
       client_secret_setting_name = "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET"
+      allowed_audiences = [
+        azuread_application.this.client_id,
+        "api://${azuread_application.this.client_id}"
+      ]
     }
   }
 
@@ -268,10 +265,15 @@ resource "azurerm_private_endpoint" "linux_web_app" {
 # Role Assignments
 # --------------------------------------------------------------------------------------------------
 
-# RBAC Permission for Deploying Principal to manage Key Vault secrets (needed for initial deployment and future updates)
+# RBAC Permission for Deploying Principal to manage Key Vault secrets and create Storage Account Table (needed for initial deployment and future updates)
 resource "azurerm_role_assignment" "kv_secrets_officer" {
   scope                = azurerm_key_vault.main.id
   role_definition_name = "Key Vault Secrets Officer"
+  principal_id         = var.deploying_principal_object_id
+}
+resource "azurerm_role_assignment" "st_blob_data_contributor" {
+  scope                = azurerm_storage_account.main.id
+  role_definition_name = "Storage Blob Data Contributor"
   principal_id         = var.deploying_principal_object_id
 }
 
@@ -281,12 +283,12 @@ resource "azurerm_role_assignment" "kv_secrets_user" {
   role_definition_name = "Key Vault Secrets User"
   principal_id         = azurerm_linux_web_app.main.identity[0].principal_id
 }
-resource "azurerm_role_assignment" "blob_data_reader" {
+resource "azurerm_role_assignment" "st_blob_data_reader" {
   scope                = azurerm_storage_account.main.id
   role_definition_name = "Storage Blob Data Reader"
   principal_id         = azurerm_linux_web_app.main.identity[0].principal_id
 }
-resource "azurerm_role_assignment" "table_data_contributor" {
+resource "azurerm_role_assignment" "st_table_data_contributor" {
   scope                = azurerm_storage_account.main.id
   role_definition_name = "Storage Table Data Contributor"
   principal_id         = azurerm_linux_web_app.main.identity[0].principal_id
