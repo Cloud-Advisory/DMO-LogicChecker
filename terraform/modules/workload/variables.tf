@@ -50,6 +50,11 @@ variable "openai_deployment_name" {
   type        = string
   default     = "gpt-5-mini"
 }
+variable "openai_deployment_capacity" {
+  description = "Capacity for Azure OpenAI deployment (number of instances)."
+  type        = number
+  default     = 1
+}
 variable "devtest_deployment" {
   description = "Flag to indicate if the deployment is for development/testing or production."
   type        = bool

@@ -28,6 +28,9 @@ openai_module_version = "2025-08-07"
 ## Name of the OpenAI model/deployment to target
 openai_deployment_name = "gpt-5-mini"
 
+## Capacity for Azure OpenAI deployment (number of instances)
+openai_deployment_capacity = 1
+
 ## Deploy a development/test instance alongside production (true=dev/test)
 devtest_deployment = true # Set to false for production deployment
 
