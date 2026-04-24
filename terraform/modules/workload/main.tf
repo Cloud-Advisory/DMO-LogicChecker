@@ -151,8 +151,10 @@ resource "azurerm_cognitive_deployment" "gpt-5-mini" {
     name    = var.openai_deployment_name
     version = var.openai_module_version
   }
+  version_upgrade_option = "NoAutoUpgrade"
   sku {
-    name = "GlobalStandard"
+    name     = "GlobalStandard"
+    capacity = var.openai_deployment_capacity
   }
 }
 

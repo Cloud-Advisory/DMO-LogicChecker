@@ -46,6 +46,11 @@ variable "openai_deployment_name" {
   type        = string
   default     = "gpt-5-mini"
 }
+variable "openai_deployment_capacity" {
+  description = "Capacity for Azure OpenAI deployment (number of instances)."
+  type        = number
+  default     = 1
+}
 variable "subscription_id" {
   description = "Azure Subscription ID where the resources will be deployed."
   type        = string
