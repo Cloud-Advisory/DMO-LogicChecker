@@ -35,6 +35,15 @@ resource "azurerm_storage_table" "main" {
   ]
 }
 
+resource "azurerm_storage_table" "llm_interaction_logs" {
+  name                 = "InteractionLogs"
+  storage_account_name = azurerm_storage_account.main.name
+  depends_on = [
+    azurerm_storage_account.main,
+    azurerm_role_assignment.st_blob_data_contributor
+  ]
+}
+
 resource "azurerm_private_endpoint" "storage_account" {
   count               = var.enable_private_networking ? 1 : 0
   name                = "pep-${azurerm_storage_account.main.name}"
@@ -211,8 +220,9 @@ resource "azurerm_linux_web_app" "main" {
     OPENAI_API_VERSION     = var.openai_api_version
     OPENAI_DEPLOYMENT_NAME = var.openai_deployment_name # var.deploy_azure_openai ? "gpt-5-mini" : null
 
-    STORAGE_ACCOUNT_NAME = azurerm_storage_account.main.name
-    STORAGE_TABLE_NAME   = azurerm_storage_table.main.name
+    STORAGE_ACCOUNT_NAME       = azurerm_storage_account.main.name
+    STORAGE_TABLE_NAME         = azurerm_storage_table.main.name
+    LLM_INTERACTION_TABLE_NAME = azurerm_storage_table.llm_interaction_logs.name
 
     SCM_DO_BUILD_DURING_DEPLOYMENT           = "1"
     MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = "@Microsoft.KeyVault(VaultName=${azurerm_key_vault.main.name};SecretName=${azurerm_key_vault_secret.entra_id_auth_secret.name})" #azuread_application_password.this.value
