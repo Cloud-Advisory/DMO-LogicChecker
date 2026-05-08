@@ -282,12 +282,13 @@ def analyze():
         for event in response_stream:
             if event.type == 'response.output_text.delta':
                 print(event.delta, end='')
+                full_response.append(event.delta)  # capture chunk for storage
                 yield event.delta  # yield each chunk of text as it is received
 
         # store the full llm_input and full response in azure storage table registry for auditing and troubleshooting purposes
         llm_interaction_registry.log_interaction(
             token=token,
-            action=payload.get('action'),
+            action=payload.action,
             llm_input=llm_input,
             llm_output="".join(full_response)
         )
