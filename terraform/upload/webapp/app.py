@@ -3,7 +3,6 @@ Flask application for medical documentation analysis using Azure Foundry LLM.
 Provides endpoints for analyzing clinical text with role-based access control.
 """
 
-from fileinput import filename
 import logging
 import json
 import base64
