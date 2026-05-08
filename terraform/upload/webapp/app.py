@@ -11,7 +11,7 @@ import os
 
 from flask import Flask, jsonify, render_template, request, make_response, abort
 from flask_cors import CORS
-from openai import base_url, OpenAI
+from openai import OpenAI
 from pydantic import BaseModel, Field, ValidationError
 
 from config import settings
