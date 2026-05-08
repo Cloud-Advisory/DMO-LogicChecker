@@ -15,7 +15,7 @@ from openai import OpenAI
 from pydantic import BaseModel, Field, ValidationError
 
 from config import settings
-from dependencies import get_llm_client, get_llm_interaction_registry, get_registry_repository, get_secret_provider
+from dependencies import get_llm_interaction_registry, get_registry_repository, get_secret_provider
 from routers import admin as admin_routes 
 from services.llm_client import AzureFoundryClient
 from services.registry import AzureStorageTableLLMInteractionRegistry, AzureTableStorageRepository
