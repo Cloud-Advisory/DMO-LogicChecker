@@ -13,4 +13,6 @@ azure-data-tables>=12.4.0
 pydantic>=2.7.1
 pydantic-settings>=2.2.1
 python-dotenv>=1.0.1
+PyPDF2>=3.0.0
+python-docx>=0.8.11
 

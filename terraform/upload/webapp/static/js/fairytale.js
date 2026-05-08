@@ -103,6 +103,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const token = urlParams.token;
     const action = urlParams.action;
 
+    document.getElementById("token").value = token || "";
+    document.getElementById("action").value = action || "";
+
     const outputText = document.getElementById("output-text");
     const copyBtn = document.getElementById("copy-btn");
     const pasteHint = document.getElementById("paste-hint");
@@ -195,35 +198,80 @@ document.addEventListener("DOMContentLoaded", async () => {
             fairytale: false,
         };
 
-        try {
-            const response = await fetch(`${config.backendUrl}/api/v1/analyze`, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${currentToken}`,
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                },
-                mode: "cors",
-                body: JSON.stringify(requestData),
-            });
 
-            const data = await response.json();
+        fetch('/api/v1/analyze', {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${currentToken}`,
+                "Content-Type": "application/json",
+                Accept: "application/json",
+            },
+            mode: "cors",
+            body: JSON.stringify(requestData),
+        })
+        .then(response => {
             if (!response.ok) {
-                throw new Error(data.error || `HTTP error: ${response.status}`);
+                throw new Error('Pasting input failed');
             }
-
-            const analysis = data.analysis || "No analysis returned.";
-            renderAnalysis(analysis);
-            showToast("Analysis ready.");
-            setStatus("Complete", "success");
-        } catch (error) {
-            console.error("Request failed:", error);
-            renderError(error.message);
-            showToast(error.message, true);
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let accumulated = '';
+            setStatus("Analyzing...", "processing");
+            function readStream() {
+                reader.read().then(({done, value}) => {
+                    if (done) {
+                        setStatus("Complete", "success");
+                        showToast("Analysis ready.");
+                        return;
+                    }
+                    const chunk = decoder.decode(value, {stream: true});
+                    accumulated += chunk;
+                    renderAnalysis(accumulated);
+                    readStream();
+                }).catch(error => {
+                    console.error('Stream error:', error);
+                    renderError("An error occurred while streaming the response.");
+                    setStatus("Error", "error");
+                });
+            }
+            readStream();
+            inputPreview.innerText = '';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            renderError("An error occurred while processing the input.");
             setStatus("Error", "error");
-        } finally {
-            isProcessing = false;
-        }
+        });
+
+        // try {
+        //     const response = await fetch(`${config.backendUrl}/api/v1/analyze`, {
+        //         method: "POST",
+        //         headers: {
+        //             Authorization: `Bearer ${currentToken}`,
+        //             "Content-Type": "application/json",
+        //             Accept: "application/json",
+        //         },
+        //         mode: "cors",
+        //         body: JSON.stringify(requestData),
+        //     });
+
+        //     const data = await response.json();
+        //     if (!response.ok) {
+        //         throw new Error(data.error || `HTTP error: ${response.status}`);
+        //     }
+
+        //     const analysis = data.analysis || "No analysis returned.";
+        //     renderAnalysis(analysis);
+        //     showToast("Analysis ready.");
+        //     setStatus("Complete", "success");
+        // } catch (error) {
+        //     console.error("Request failed:", error);
+        //     renderError(error.message);
+        //     showToast(error.message, true);
+        //     setStatus("Error", "error");
+        // } finally {
+        //     isProcessing = false;
+        // }
     }
 
     function renderAnalysis(content) {
@@ -266,4 +314,117 @@ document.getElementById('set-config-btn').addEventListener('click', function() {
     url.searchParams.set('action', action);
     url.searchParams.set('token', token);
     window.location = url.toString();
+});
+
+document.getElementById('upload-btn').addEventListener('click', function() {
+
+    const outputText = document.getElementById("output-text");
+    const copyBtn = document.getElementById("copy-btn");
+    const pasteHint = document.getElementById("paste-hint");
+    const statusDot = document.getElementById("status-dot");
+    const toast = document.getElementById("toast");
+    const shell = document.querySelector(".shell");
+
+    const fileInput = document.getElementById('file-input');
+    const file = fileInput.files[0];
+    if (!file) {
+        alert('Please select a file.');
+        return;
+    }
+    const urlParams = getQueryParams();
+    const action = urlParams.action;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('filename', file.name);
+    formData.append('action', action);
+    formData.append('fairytale', false);
+    // const currentToken = document.getElementById('token').value;
+    const currentToken = urlParams.token;
+    console.log(formData);
+
+    // Change Text to indicate upload in progress of input preview paragraph
+    const inputPreview = document.getElementById('input-preview');
+    if (inputPreview) {
+        inputPreview.innerText = 'Analyzing File Contents';
+    }
+    document.getElementById('output-text').innerHTML = 'Uploading file...';
+
+    // Update status
+    document.getElementById('status-dot').textContent = 'Uploading...';
+    fetch('/api/v1/upload', {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${currentToken}`,
+            Accept: "text/plain",
+        },
+        mode: "cors",
+        body: formData,
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Upload failed');
+        }
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let accumulated = '';
+        setStatus("Analyzing...", "processing");
+        function readStream() {
+            reader.read().then(({done, value}) => {
+                if (done) {
+                    setStatus("Complete", "success");
+                    showToast("Analysis ready.");
+                    return;
+                }
+                const chunk = decoder.decode(value, {stream: true});
+                accumulated += chunk;
+                renderAnalysis(accumulated);
+                readStream();
+            }).catch(error => {
+                console.error('Stream error:', error);
+                renderError("An error occurred while streaming the response.");
+                setStatus("Error", "error");
+            });
+        }
+        readStream();
+        inputPreview.innerText = '';
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        renderError("An error occurred while processing the file.");
+        setStatus("Error", "error");
+    });
+    // });
+
+    function renderAnalysis(content) {
+        outputText.innerHTML = sanitizeHtml(content);
+    }
+
+    function renderError(message) {
+        outputText.innerHTML = `<p class="error-message">Error: ${escapeHtml(message)}</p>`;
+    }
+
+    function updatePreview(text) {
+        if (inputPreview) {
+            inputPreview.innerText = abbreviate(text);
+        }
+    }
+
+    function setStatus(label, variant = "idle") {
+        if (!statusDot) {
+            return;
+        }
+        statusDot.innerText = label;
+        statusDot.className = `status ${variant}`.trim();
+    }
+
+    function showToast(message, isError = false) {
+        if (!toast) {
+            return;
+        }
+        toast.innerText = message;
+        toast.style.background = isError ? "#e25255" : "#0b1f3a";
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2000);
+    }
+
 });

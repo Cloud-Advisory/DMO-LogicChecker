@@ -73,6 +73,7 @@ class Settings(BaseSettings):
 
     storage_account_name: str = Field(default="", alias="STORAGE_ACCOUNT_NAME")
     storage_table_name: str = Field(default="ApiConfig", alias="STORAGE_TABLE_NAME")
+    llm_interaction_table_name: str = Field(default="InteractionLogs", alias="LLM_INTERACTION_TABLE_NAME")
 
     data_provider: str = Field(default="table", alias="DATA_PROVIDER")
 
