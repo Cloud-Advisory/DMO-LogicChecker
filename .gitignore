@@ -281,3 +281,4 @@ __marimo__/
 /terraform/upload/webapp/routers/__pycache__
 /terraform/upload/webapp/services/__pycache__
 providers copy.tf
+*.pyc

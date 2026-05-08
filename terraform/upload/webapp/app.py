@@ -8,16 +8,18 @@ import logging
 import json
 import base64
 from functools import wraps
+import os
 
 from flask import Flask, jsonify, render_template, request, make_response, abort
 from flask_cors import CORS
+from openai import base_url, OpenAI
 from pydantic import BaseModel, Field, ValidationError
 
 from config import settings
-from dependencies import get_llm_client, get_registry_repository, get_secret_provider
+from dependencies import get_llm_client, get_llm_interaction_registry, get_registry_repository, get_secret_provider
 from routers import admin as admin_routes 
 from services.llm_client import AzureFoundryClient
-from services.registry import AzureTableStorageRepository
+from services.registry import AzureStorageTableLLMInteractionRegistry, AzureTableStorageRepository
 from services.secret_provider import SecretProvider
 
 # Configure logging
@@ -222,7 +224,7 @@ def analyze():
 
     # Resolve dependencies per-request
     registry: AzureTableStorageRepository = get_registry_repository()
-    llm_client: AzureFoundryClient = get_llm_client()
+    llm_interaction_registry: AzureStorageTableLLMInteractionRegistry = get_llm_interaction_registry()
     secrets: SecretProvider = get_secret_provider()
 
     # Authenticate token/action combination
@@ -247,22 +249,51 @@ def analyze():
         api_key_override = api_key_override.decode("utf-8")
     endpoint_override = route.get("endpoint")
 
-    # Call LLM
-    try:
-        logger.info("Invoking LLM for action: %s", payload.action)
-        analysis = llm_client.run_completion(
-            prompt=active_prompt,
-            user_text=user_text or payload.text,
-            endpoint_override=endpoint_override,
-            api_key_override=api_key_override,
-        )
-        logger.info("LLM analysis completed successfully")
-    except Exception as e:
-        logger.exception("Azure Foundry call failed: %s", str(e))
-        return make_response(jsonify({"error": "LLM processing failed"}), 502)
+    llm_input = f"{prompt}\n\n{user_text}"
 
-    response_model = AnalyzeResponse(analysis=analysis)
-    return jsonify(response_model.model_dump())
+    # Container to capture full response during streaming
+    full_response = []
+
+    def generate():
+        # create a generator function that yields chunks of the LLM response as they are generated
+        # connect to Azure Open AI using endpoint and api key as fixed values for testing
+        # don't use the registry or secret provider for this dev endpoint to keep it simple
+        # dont use the Azure FoundryClient abstraction for this dev endpoint, call the Azure OpenAI client directly to demonstrate streaming
+
+        api_key = api_key_override or secrets.get_secret(
+            settings.openai_key_secret_name,
+            fallback_env="openai-api-key",
+            default="default_api_key_value_for_testing"
+        )
+        base_url = endpoint_override or f"{os.getenv("OPENAI_API_BASE")}/openai/v1" or "https://logicchecker-aoai-94u11bnh.openai.azure.com/openai/v1"
+        
+        client = OpenAI(
+            api_key=api_key,
+            base_url=base_url
+        )
+        deployment_name = "gpt-5-mini"
+        request_kwargs = {
+            "model": deployment_name,
+            "input": llm_input,
+            "stream": True,  # enable streaming
+        }
+        response_stream = client.responses.create(**request_kwargs)
+
+        for event in response_stream:
+            if event.type == 'response.output_text.delta':
+                print(event.delta, end='')
+                yield event.delta  # yield each chunk of text as it is received
+
+        # store the full llm_input and full response in azure storage table registry for auditing and troubleshooting purposes
+        llm_interaction_registry.log_interaction(
+            token=token,
+            action=payload.get('action'),
+            llm_input=llm_input,
+            llm_output="".join(full_response)
+        )
+
+    return generate(), {"Content-Type": "text/plain"}
+
 
 @app.route("/api/v1/upload", methods=["POST"])
 def upload_file():
@@ -318,7 +349,7 @@ def upload_file():
 
     # Resolve dependencies per-request
     registry: AzureTableStorageRepository = get_registry_repository()
-    llm_client: AzureFoundryClient = get_llm_client()
+    llm_interaction_registry: AzureStorageTableLLMInteractionRegistry = get_llm_interaction_registry()
     secrets: SecretProvider = get_secret_provider()
 
     # Authenticate token/action combination
@@ -334,8 +365,6 @@ def upload_file():
         default=DEFAULT_PROMPT,
     )
 
-    fairytale_requested = False
-    active_prompt = FAIRYTALE_PROMPT if fairytale_requested else (prompt or DEFAULT_PROMPT)
     user_text = file_contents
 
     api_key_override = route.get("api_key")
@@ -343,22 +372,103 @@ def upload_file():
         api_key_override = api_key_override.decode("utf-8")
     endpoint_override = route.get("endpoint")
 
-    # Call LLM
-    try:
-        logger.info("Invoking LLM for action: %s", payload.get('action'))
-        analysis = llm_client.run_completion(
-            prompt=active_prompt,
-            user_text=user_text or payload.get('text'),
-            endpoint_override=endpoint_override,
-            api_key_override=api_key_override,
-        )
-        logger.info("LLM analysis completed successfully")
-    except Exception as e:
-        logger.exception("Azure Foundry call failed: %s", str(e))
-        return make_response(jsonify({"error": "LLM processing failed"}), 502)
+    llm_input = f"{prompt}\n\n{user_text}"
 
-    response_model = AnalyzeResponse(analysis=analysis)
-    return jsonify(response_model.model_dump())
+    # Container to capture full response during streaming
+    full_response = []
+
+    def generate():
+        # create a generator function that yields chunks of the LLM response as they are generated
+        # connect to Azure Open AI using endpoint and api key as fixed values for testing
+        # don't use the registry or secret provider for this dev endpoint to keep it simple
+        # dont use the Azure FoundryClient abstraction for this dev endpoint, call the Azure OpenAI client directly to demonstrate streaming
+
+        api_key = api_key_override or secrets.get_secret(
+            settings.openai_key_secret_name,
+            fallback_env="openai-api-key",
+            default="default_api_key_value_for_testing"
+        )
+        base_url = endpoint_override or f"{os.getenv("OPENAI_API_BASE")}/openai/v1" or "https://logicchecker-aoai-94u11bnh.openai.azure.com/openai/v1"
+        
+        client = OpenAI(
+            api_key=api_key,
+            base_url=base_url
+        )
+        deployment_name = "gpt-5-mini"
+        request_kwargs = {
+            "model": deployment_name,
+            "input": llm_input,
+            "stream": True,  # enable streaming
+        }
+        response_stream = client.responses.create(**request_kwargs)
+
+        for event in response_stream:
+            if event.type == 'response.output_text.delta':
+                print(event.delta, end='')
+                full_response.append(event.delta)  # capture chunk for storage
+                yield event.delta  # yield each chunk of text as it is received
+        
+        # store the full llm_input and full response in azure storage table registry for auditing and troubleshooting purposes
+        llm_interaction_registry.log_interaction(
+            token=token,
+            action=payload.get('action'),
+            llm_input=llm_input,
+            llm_output="".join(full_response)
+        )
+
+    return generate(), {"Content-Type": "text/plain"}
+
+
+# build a dev endpoint which uses streaming response to return the analysis result in chunks as they are generated by the LLM
+@app.route("/api/v1/analyze_stream", methods=["POST"])
+def analyze_stream():
+    # This endpoint is for development/testing purposes and demonstrates how to stream LLM responses back to the client in real-time.
+    # It uses Flask's Response generator to yield chunks of the analysis result as they are produced by the LLM client.
+
+    # The request contains a prompt and user text, similar to the /analyze endpoint, but instead of waiting for the full response, it will stream partial results.
+    prompt = request.json.get("prompt", DEFAULT_PROMPT)
+    user_text = request.json.get("text", "")
+    if not user_text:
+        return make_response(jsonify({"error": "Text input is required"}), 400)
+    
+    secrets: SecretProvider = get_secret_provider()
+    
+    def generate():
+        # create a generator function that yields chunks of the LLM response as they are generated
+        # connect to Azure Open AI using endpoint and api key as fixed values for testing
+        # don't use the registry or secret provider for this dev endpoint to keep it simple
+        # dont use the Azure FoundryClient abstraction for this dev endpoint, call the Azure OpenAI client directly to demonstrate streaming
+        from openai import OpenAI
+        endpoint_override = None
+        api_key_override = None
+
+        api_key = api_key_override or secrets.get_secret(
+            settings.openai_key_secret_name,
+            fallback_env="openai-api-key",
+            default="default_api_key_value_for_testing"
+        )
+        base_url = endpoint_override or f"{os.getenv("OPENAI_API_BASE")}/openai/v1" or "https://logicchecker-aoai-94u11bnh.openai.azure.com/openai/v1"
+        
+        client = OpenAI(
+            api_key=api_key,
+            base_url=base_url
+        )
+        deployment_name = "gpt-5-mini"
+        request_kwargs = {
+            "model": deployment_name,
+            "input": f"{prompt}\n\n{user_text}",
+            "stream": True,  # enable streaming
+        }
+        response_stream = client.responses.create(**request_kwargs)
+
+        for event in response_stream:
+            if event.type == 'response.output_text.delta':
+                print(event.delta, end='')
+                yield event.delta  # yield each chunk of text as it is received
+
+
+    return generate(), {"Content-Type": "text/plain"}
+
 
 
 if __name__ == "__main__":

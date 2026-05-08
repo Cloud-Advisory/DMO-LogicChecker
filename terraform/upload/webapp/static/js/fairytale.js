@@ -103,6 +103,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const token = urlParams.token;
     const action = urlParams.action;
 
+    document.getElementById("token").value = token || "";
+    document.getElementById("action").value = action || "";
+
     const outputText = document.getElementById("output-text");
     const copyBtn = document.getElementById("copy-btn");
     const pasteHint = document.getElementById("paste-hint");
@@ -195,35 +198,80 @@ document.addEventListener("DOMContentLoaded", async () => {
             fairytale: false,
         };
 
-        try {
-            const response = await fetch(`${config.backendUrl}/api/v1/analyze`, {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${currentToken}`,
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                },
-                mode: "cors",
-                body: JSON.stringify(requestData),
-            });
 
-            const data = await response.json();
+        fetch('/api/v1/analyze', {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${currentToken}`,
+                "Content-Type": "application/json",
+                Accept: "application/json",
+            },
+            mode: "cors",
+            body: JSON.stringify(requestData),
+        })
+        .then(response => {
             if (!response.ok) {
-                throw new Error(data.error || `HTTP error: ${response.status}`);
+                throw new Error('Pasting input failed');
             }
-
-            const analysis = data.analysis || "No analysis returned.";
-            renderAnalysis(analysis);
-            showToast("Analysis ready.");
-            setStatus("Complete", "success");
-        } catch (error) {
-            console.error("Request failed:", error);
-            renderError(error.message);
-            showToast(error.message, true);
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let accumulated = '';
+            setStatus("Analyzing...", "processing");
+            function readStream() {
+                reader.read().then(({done, value}) => {
+                    if (done) {
+                        setStatus("Complete", "success");
+                        showToast("Analysis ready.");
+                        return;
+                    }
+                    const chunk = decoder.decode(value, {stream: true});
+                    accumulated += chunk;
+                    renderAnalysis(accumulated);
+                    readStream();
+                }).catch(error => {
+                    console.error('Stream error:', error);
+                    renderError("An error occurred while streaming the response.");
+                    setStatus("Error", "error");
+                });
+            }
+            readStream();
+            inputPreview.innerText = '';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            renderError("An error occurred while processing the input.");
             setStatus("Error", "error");
-        } finally {
-            isProcessing = false;
-        }
+        });
+
+        // try {
+        //     const response = await fetch(`${config.backendUrl}/api/v1/analyze`, {
+        //         method: "POST",
+        //         headers: {
+        //             Authorization: `Bearer ${currentToken}`,
+        //             "Content-Type": "application/json",
+        //             Accept: "application/json",
+        //         },
+        //         mode: "cors",
+        //         body: JSON.stringify(requestData),
+        //     });
+
+        //     const data = await response.json();
+        //     if (!response.ok) {
+        //         throw new Error(data.error || `HTTP error: ${response.status}`);
+        //     }
+
+        //     const analysis = data.analysis || "No analysis returned.";
+        //     renderAnalysis(analysis);
+        //     showToast("Analysis ready.");
+        //     setStatus("Complete", "success");
+        // } catch (error) {
+        //     console.error("Request failed:", error);
+        //     renderError(error.message);
+        //     showToast(error.message, true);
+        //     setStatus("Error", "error");
+        // } finally {
+        //     isProcessing = false;
+        // }
     }
 
     function renderAnalysis(content) {
@@ -307,20 +355,38 @@ document.getElementById('upload-btn').addEventListener('click', function() {
         method: "POST",
         headers: {
             Authorization: `Bearer ${currentToken}`,
-            Accept: "application/json",
+            Accept: "text/plain",
         },
         mode: "cors",
         body: formData,
     })
-    .then(response => response.json())
-    .then(data => {
-        // Update output and status
-        // document.getElementById('output-text').innerHTML = data.result || 'Processing complete.';
-        // document.getElementById('status-dot').textContent = 'Idle';
-        const analysis = data.analysis || "No analysis returned.";
-        renderAnalysis(analysis);
-        showToast("Analysis ready.");
-        setStatus("Complete", "success");
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Upload failed');
+        }
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let accumulated = '';
+        setStatus("Analyzing...", "processing");
+        function readStream() {
+            reader.read().then(({done, value}) => {
+                if (done) {
+                    setStatus("Complete", "success");
+                    showToast("Analysis ready.");
+                    return;
+                }
+                const chunk = decoder.decode(value, {stream: true});
+                accumulated += chunk;
+                renderAnalysis(accumulated);
+                readStream();
+            }).catch(error => {
+                console.error('Stream error:', error);
+                renderError("An error occurred while streaming the response.");
+                setStatus("Error", "error");
+            });
+        }
+        readStream();
+        inputPreview.innerText = '';
     })
     .catch(error => {
         console.error('Error:', error);

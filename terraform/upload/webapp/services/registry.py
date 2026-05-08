@@ -1,5 +1,6 @@
 import logging
 from typing import Any, List, Optional
+import uuid
 from azure.identity import DefaultAzureCredential
 
 from azure.data.tables import TableClient, TableServiceClient
@@ -142,3 +143,60 @@ class AzureTableStorageRepository:
             self._logger.error("Failed to delete route %s/%s: %s", token, action, exc)
             raise
 
+
+class AzureStorageTableLLMInteractionRegistry:
+    """Registry for storing LLM inputs and outputs in Azure Table Storage for auditing."""
+
+    def __init__(self, settings: Settings, secrets: SecretProvider):
+        self._settings = settings
+        self._secrets = secrets
+        self._logger = logging.getLogger(__name__)
+        self._table_client: Optional[TableClient] = None
+        self._initialize_table_client()
+
+    def _initialize_table_client(self):
+        """Initialize the Azure Table Storage client."""
+        storage_account_name = self._settings.storage_account_name.strip()
+        table_name = self._settings.llm_interaction_table_name.strip()
+
+        if not storage_account_name:
+            raise RuntimeError("STORAGE_ACCOUNT_NAME is not configured.")
+        if not table_name:
+            raise RuntimeError("STORAGE_TABLE_NAME is not configured.")
+
+        try:
+            credential = DefaultAzureCredential()
+            table_service_client = TableServiceClient(
+                endpoint=f"https://{storage_account_name}.table.core.windows.net/",
+                credential=credential,
+            )
+            self._table_client = table_service_client.get_table_client(table_name)
+
+            self._logger.info(
+                "Successfully initialized Azure Table Storage client for registry table %s in account %s",
+                table_name,
+                storage_account_name,
+            )
+        except Exception as exc:  # pylint: disable=broad-except
+            self._logger.error("Failed to initialize Azure Table Storage client for registry: %s", exc)
+            raise
+
+    def log_interaction(self, token: str, action: str, llm_input: str, llm_output: str) -> None:
+        """Log an LLM interaction to the registry."""
+        if not self._table_client:
+            self._logger.error("Table client not initialized")
+            raise RuntimeError("Table client not initialized")
+
+        entity = {
+            "PartitionKey": token,
+            "RowKey": f"{action}_{uuid.uuid4()}",
+            "llm_input": llm_input,
+            "llm_output": llm_output,
+        }
+
+        try:
+            self._table_client.create_entity(entity)
+            self._logger.info("Logged LLM interaction for token %s and action %s", token, action)
+        except Exception as exc:  # pylint: disable=broad-except
+            self._logger.error("Failed to log LLM interaction for token %s and action %s: %s", token, action, exc)
+            raise

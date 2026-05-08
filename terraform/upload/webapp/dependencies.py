@@ -2,7 +2,7 @@ from functools import lru_cache
 
 from config import settings
 from services.llm_client import AzureFoundryClient
-from services.registry import AzureTableStorageRepository
+from services.registry import AzureStorageTableLLMInteractionRegistry, AzureTableStorageRepository
 from services.secret_provider import SecretProvider
 
 
@@ -21,6 +21,11 @@ def get_registry_repository() -> AzureTableStorageRepository:
     """
     secrets = get_secret_provider()
     return AzureTableStorageRepository(settings, secrets)
+
+@lru_cache
+def get_llm_interaction_registry() -> AzureStorageTableLLMInteractionRegistry:
+    secrets = get_secret_provider()
+    return AzureStorageTableLLMInteractionRegistry(settings, secrets)
 
 
 @lru_cache
