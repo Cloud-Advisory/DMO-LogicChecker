@@ -9,7 +9,7 @@ import base64
 from functools import wraps
 import os
 
-from flask import Flask, jsonify, render_template, request, make_response, abort
+from flask import Flask, jsonify, render_template, request, make_response, abort, escape
 from flask_cors import CORS
 from openai import OpenAI
 from pydantic import BaseModel, Field, ValidationError
@@ -218,7 +218,7 @@ def analyze():
     auth_header = request.headers.get("Authorization")
     token_or_response = _extract_bearer_token(auth_header)
     if isinstance(token_or_response, tuple) or hasattr(token_or_response, "status_code"):
-        return token_or_response
+        return escape(token_or_response)
     token = token_or_response
 
     # Resolve dependencies per-request
@@ -473,4 +473,4 @@ def analyze_stream():
 
 if __name__ == "__main__":
     logger.info("Starting Flask application on 0.0.0.0:8000")
-    app.run(host="0.0.0.0", debug=True, port=8000)
+    app.run(host="0.0.0.0", debug=False, port=8000)
