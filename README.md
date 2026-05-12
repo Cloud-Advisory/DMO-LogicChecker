@@ -75,7 +75,7 @@ Look for `web_app_name` - your app runs at: `https://{web_app_name}.azurewebsite
 ## What Gets Created
 
 - **Resource Group** - Contains all resources
-- **Web App** - Python FastAPI backend (Linux App Service)
+- **Web App** - Python Flask WebApp (Linux App Service)
 - **Azure OpenAI** - Optional LLM service (gpt-5-mini)
 - **Storage Account** - For config storage
 - **Key Vault** - For secrets management
