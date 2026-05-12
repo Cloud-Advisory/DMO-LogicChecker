@@ -141,7 +141,7 @@ class Settings(BaseSettings):
                 if isinstance(parsed, list):
                     return [str(origin).strip() for origin in parsed if str(origin).strip()]
             except json.JSONDecodeError:
-                pass
+                logging.getLogger(__name__).warning("ALLOWED_ORIGINS is not valid JSON; using comma-separated values.")
             return [origin.strip() for origin in clean.split(",") if origin.strip()]
         return []
 

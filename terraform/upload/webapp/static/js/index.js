@@ -319,11 +319,11 @@ document.getElementById('set-config-btn').addEventListener('click', function() {
 document.getElementById('upload-btn').addEventListener('click', function() {
 
     const outputText = document.getElementById("output-text");
-    const copyBtn = document.getElementById("copy-btn");
-    const pasteHint = document.getElementById("paste-hint");
+    // const copyBtn = document.getElementById("copy-btn");
+    // const pasteHint = document.getElementById("paste-hint");
     const statusDot = document.getElementById("status-dot");
     const toast = document.getElementById("toast");
-    const shell = document.querySelector(".shell");
+    // const shell = document.querySelector(".shell");
 
     const fileInput = document.getElementById('file-input');
     const file = fileInput.files[0];

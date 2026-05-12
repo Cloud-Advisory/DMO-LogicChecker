@@ -239,8 +239,6 @@ def analyze():
         default=DEFAULT_PROMPT,
     )
 
-    fairytale_requested = payload.fairytale or (FAIRYTALE_TRIGGER in payload.text.lower())
-    active_prompt = FAIRYTALE_PROMPT if fairytale_requested else (prompt or DEFAULT_PROMPT)
     user_text = payload.text.replace(FAIRYTALE_TRIGGER, "").strip()
     
     api_key_override = route.get("api_key")
