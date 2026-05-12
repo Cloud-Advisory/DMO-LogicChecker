@@ -1,3 +1,10 @@
+"""Configuration module for the webapp.
+
+This module loads settings from environment variables, local.settings.json files
+for local development, and .env files. It also provides a Settings model with
+parsing helpers for complex values such as JSON-encoded lists and dictionaries.
+"""
+
 import json
 import logging
 import os
@@ -9,8 +16,14 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, EnvSettingsSource, SettingsConfigDict
 
 
+
 def _load_local_settings() -> None:
-    """Load values from a local.settings.json file to mirror SWA/Functions apps."""
+    """Load local settings from a JSON file into the process environment.
+
+    This is intended to mirror Azure Static Web Apps / Functions behavior by
+    reading `local.settings.json` and populating `os.environ` with the values
+    found under the top-level `Values` dictionary.
+    """
 
     candidate_paths: List[Path] = []
     env_override = os.getenv("LOCAL_SETTINGS_FILE")
@@ -34,6 +47,7 @@ def _load_local_settings() -> None:
         if not isinstance(values, dict):
             continue
 
+        # Only set values that are not already present in the environment.
         for key, value in values.items():
             if key and key not in os.environ:
                 os.environ[key] = str(value)
@@ -44,9 +58,15 @@ _load_local_settings()
 
 
 class LenientEnvSource(EnvSettingsSource):
-    """Env source that treats invalid JSON as plain strings for complex fields."""
+    """Environment source that tolerates invalid JSON for complex fields."""
 
     def decode_complex_value(self, field_name, field, value):
+        """Decode JSON values when possible, otherwise return raw string.
+
+        Pydantic's default behavior raises on invalid JSON for fields like lists
+        or dictionaries. This class allows plain strings to pass through for
+        later custom parsing.
+        """
         try:
             return super().decode_complex_value(field_name, field, value)
         except json.JSONDecodeError:
@@ -54,7 +74,11 @@ class LenientEnvSource(EnvSettingsSource):
 
 
 class Settings(BaseSettings):
-    """Central configuration object loaded from environment variables or .env files."""
+    """Central configuration object for the webapp.
+
+    Settings are loaded from environment variables first, then .env files,
+    and finally from secrets if available.
+    """
 
     app_name: str = Field(default="SITS Logic Checker", alias="APP_NAME")
     app_region: str = Field(default="westeurope", alias="APP_REGION")
@@ -63,7 +87,7 @@ class Settings(BaseSettings):
     cors_allow_credentials: bool = Field(default=True, alias="CORS_ALLOW_CREDENTIALS")
 
     openai_api_base: str = Field(default="", alias="OPENAI_API_BASE")
-    openai_deployment_name: str = Field(default="gpt-5-mini", alias="OPENAI_DEPLOYMENT_NAME") # wenn keine Env-Variable gesetzt ist, wird der Wert aus dem Profil geladen
+    openai_deployment_name: str = Field(default="gpt-5-mini", alias="OPENAI_DEPLOYMENT_NAME")
     openai_api_version: str = Field(default="2025-04-01-preview", alias="OPENAI_API_VERSION")
     openai_key_secret_name: str = Field(default="openai-api-key", alias="OPENAI_KEY_SECRET_NAME")
     prompt_secret_name: str = Field(default="prompt-template", alias="PROMPT_SECRET_NAME")
@@ -94,6 +118,7 @@ class Settings(BaseSettings):
         dotenv_settings,
         file_secret_settings,
     ):
+        """Customize the order of settings sources used by Pydantic."""
         return (
             init_settings,
             LenientEnvSource(settings_cls),
@@ -104,6 +129,7 @@ class Settings(BaseSettings):
     @field_validator("allowed_origins", mode="before")
     @classmethod
     def parse_allowed_origins(cls, value: List[str] | str | None) -> List[str]:
+        """Parse allowed origins from a list, JSON string, or comma-separated string."""
         if isinstance(value, list):
             return value
         if isinstance(value, str):
@@ -122,6 +148,7 @@ class Settings(BaseSettings):
     @field_validator("openai_model_profile", mode="before")
     @classmethod
     def parse_model_profile(cls, value: dict[str, Any] | str | None) -> dict[str, Any] | None:
+        """Parse OpenAI model profile from JSON string or dictionary value."""
         if isinstance(value, dict):
             return value
         if isinstance(value, str):
@@ -139,6 +166,7 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
+    """Return a cached Settings instance for the current process."""
     return Settings()
 
 

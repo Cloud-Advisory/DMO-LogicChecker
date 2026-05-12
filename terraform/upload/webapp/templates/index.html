@@ -5,12 +5,12 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="description" content="Compliant AI Logic Check – SITS kiosk interface" />
         <title>Compliant AI Logic Check | SITS</title>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}" crossorigin="anonymous" referrerpolicy="no-referrer" />
         <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}" crossorigin="anonymous" referrerpolicy="no-referrer" />
-        <link rel="icon" href="https://sits.com/wp-content/uploads/2024/05/cropped-favicon-32x32-1-32x32.png" sizes="32x32" />
-        <link rel="icon" href="https://sits.com/wp-content/uploads/2024/05/cropped-favicon-32x32-1-192x192.png" sizes="192x192" />
-        <link rel="apple-touch-icon" href="https://sits.com/wp-content/uploads/2024/05/cropped-favicon-32x32-1-180x180.png" />
-        <meta name="msapplication-TileImage" content="https://sits.com/wp-content/uploads/2024/05/cropped-favicon-32x32-1-270x270.png" />
+        <link rel="icon" href="{{ url_for('static', filename='img/cropped-favicon-32x32-1-32x32.png') }}" sizes="32x32" />
+        <link rel="icon" href="{{ url_for('static', filename='img/cropped-favicon-192x192-1-192x192.png') }}" sizes="192x192" />
+        <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/cropped-favicon-180x180-1-180x180.png') }}" />
+        <meta name="msapplication-TileImage" content="{{ url_for('static', filename='img/cropped-favicon-270x270-1-270x270.png') }}" />
     </head>
     <body>
         <div class="grain"></div>
@@ -89,8 +89,8 @@
 
         <div class="toast" id="toast">Ready.</div>
 
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js" integrity="sha512-9+ilAOeXY8qy2bw/h51MmliNNHvdyhTpLIlqDmVpD26z8VjVJsUJtk5rhbDIUvYiD+EpGoAu0xTa7MhZohFQjA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-        <script src="{{ url_for('static', filename='js/fairytale.js') }}" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="{{ url_for('static', filename='js/purify.min.js') }}" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="{{ url_for('static', filename='js/index.js') }}" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     </body>
 </html>
 

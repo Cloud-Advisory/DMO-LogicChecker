@@ -55,7 +55,7 @@ resource "null_resource" "app_deployer" {
     # This assumes the 'az' CLI is logged in and 'zip' is available.
     # The working directory for this command is `terraform/`
     working_dir = abspath(path.module)
-    interpreter = ["Powershell", "-c"]
+    interpreter = ["pwsh", "-c"]
   }
   depends_on = [
     module.workload
