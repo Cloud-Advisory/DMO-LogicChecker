@@ -1,10 +1,6 @@
-from typing import List
 from functools import wraps
 from flask import Blueprint, request, abort, jsonify
 from pydantic import BaseModel, Field, ValidationError
-from azure.identity import DefaultAzureCredential
-from azure.keyvault.secrets import SecretClient
-import jwt
 import logging
 import base64
 import json
