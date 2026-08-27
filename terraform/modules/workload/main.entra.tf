@@ -41,6 +41,28 @@ resource "azuread_application" "this" {
       value                      = "user_impersonation"
     }
   }
+  required_resource_access {
+    resource_app_id = "00000003-0000-0000-c000-000000000000" # Microsoft Graph
+
+    resource_access {
+      id   = "df021288-bdef-4463-88db-98f22de89214" # User.Read
+      type = "Role"
+    }
+
+    resource_access {
+      id   = "14dad69e-099b-42c9-810b-d002981feec1" # profile
+      type = "Scope"
+    }
+
+    resource_access {
+      id   = "64a6cdd6-aab1-4aaf-94b8-3cc8405e90d0" # email
+      type = "Scope"
+    }
+    resource_access {
+      id   = "37f7f235-527c-4136-accd-4a02d197296e" # openid
+      type = "Scope"
+    }
+  }
 }
 
 # add secret in appreg
