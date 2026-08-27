@@ -27,8 +27,8 @@ resource "azurerm_storage_account" "main" {
 }
 
 resource "azurerm_storage_table" "main" {
-  name                 = "ApiConfig"
-  storage_account_name = azurerm_storage_account.main.name
+  name               = "ApiConfig"
+  storage_account_id = azurerm_storage_account.main.id
   depends_on = [
     azurerm_storage_account.main,
     azurerm_role_assignment.st_blob_data_contributor
@@ -36,8 +36,8 @@ resource "azurerm_storage_table" "main" {
 }
 
 resource "azurerm_storage_table" "llm_interaction_logs" {
-  name                 = "InteractionLogs"
-  storage_account_name = azurerm_storage_account.main.name
+  name               = "InteractionLogs"
+  storage_account_id = azurerm_storage_account.main.id
   depends_on = [
     azurerm_storage_account.main,
     azurerm_role_assignment.st_blob_data_contributor
@@ -160,7 +160,7 @@ resource "azurerm_cognitive_deployment" "gpt-5-mini" {
     name    = var.openai_deployment_name
     version = var.openai_module_version
   }
-  version_upgrade_option = "NoAutoUpgrade"
+  # NoAutoUpgrade or OnceNewDefaultVersionAvailable
   sku {
     name     = "GlobalStandard"
     capacity = var.openai_deployment_capacity
